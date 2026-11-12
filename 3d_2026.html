@@ -1,0 +1,1880 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>موسوعة العلوم التفاعلية 3D | الطالبة حلا تامر - الصف الثاني الإعدادي 2026</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Cairo & Tajawal for crisp Arabic typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <!-- Three.js for 3D Background & 3D Interactive Lab -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Tone.js for Interactive Sound Effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- Font Awesome for Science Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Cairo', 'Tajawal', sans-serif;
+            background-color: #070b19;
+            color: #f8fafc;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* 3D Background Canvas */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Glassmorphism Cards */
+        .glass-card {
+            background: rgba(15, 23, 42, 0.72);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(56, 189, 248, 0.22);
+            box-shadow: 0 10px 35px -5px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.08);
+            transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(56, 189, 248, 0.55);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 0 30px rgba(56, 189, 248, 0.18);
+        }
+
+        /* Floating Motion Animations */
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(2deg); }
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(168, 85, 247, 0.4), 0 0 30px rgba(56, 189, 248, 0.2); }
+            50% { box-shadow: 0 0 25px rgba(168, 85, 247, 0.8), 0 0 45px rgba(56, 189, 248, 0.5); }
+        }
+
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .animate-float {
+            animation: floatSlow 5s ease-in-out infinite;
+        }
+
+        .animate-glow {
+            animation: pulseGlow 3s infinite;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #38bdf8, #c084fc, #f472b6, #38bdf8);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientFlow 6s ease infinite;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #070b19;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, #0284c7, #9333ea);
+            border-radius: 999px;
+        }
+
+        /* Interactive Lab 3D Container */
+        #lab-canvas-container {
+            width: 100%;
+            height: 360px;
+            border-radius: 1.25rem;
+            overflow: hidden;
+            position: relative;
+            background: radial-gradient(circle at center, #131c38 0%, #060914 100%);
+            border: 2px solid rgba(56, 189, 248, 0.35);
+            cursor: grab;
+        }
+        #lab-canvas-container:active {
+            cursor: grabbing;
+        }
+
+        /* Chemical Equation Formatting */
+        .chem-formula {
+            direction: ltr;
+            display: inline-block;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        /* Tab Active Indicator */
+        .nav-pill.active {
+            background: linear-gradient(135deg, #0284c7 0%, #7e22ce 100%);
+            color: white;
+            box-shadow: 0 4px 20px rgba(126, 34, 206, 0.5);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Bubble Buttons */
+        .btn-bubble {
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+        }
+        .btn-bubble:hover {
+            transform: scale(1.04);
+        }
+        .btn-bubble:active {
+            transform: scale(0.96);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
+
+    <!-- 3D Floating Atoms & Molecules Background -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Top Student Banner & Navigation Header -->
+    <header class="sticky top-0 z-50 glass-card border-b border-sky-500/30 rounded-b-3xl mx-2 sm:mx-6 mt-1 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+            <!-- Student Identity Badge -->
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-sky-500 via-purple-600 to-pink-500 flex items-center justify-center text-2xl shadow-lg animate-glow">
+                    👩‍🔬
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h1 class="text-lg sm:text-xl font-extrabold text-white tracking-wide">
+                            الطالبة المتميزة: <span class="gradient-text">حلا تامر</span> ✨
+                        </h1>
+                        <span class="text-xs bg-sky-500/20 text-sky-300 border border-sky-400/30 px-2.5 py-0.5 rounded-full font-bold">
+                            2 إعدادي • ترم أول 2026
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-300">الوحدة الثانية: التفاعلات الكيميائية والمعادلات وكيمياء التغذية 🧪⚛️</p>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <nav class="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+                <button onclick="switchSection('home')" id="btn-home" class="nav-pill active btn-bubble px-3 py-2 rounded-xl text-xs sm:text-sm font-bold border border-slate-700/80 flex items-center gap-1.5">
+                    <span>🏠</span> الرئيسية
+                </button>
+                <button onclick="switchSection('lesson1')" id="btn-lesson1" class="nav-pill btn-bubble px-3 py-2 rounded-xl text-xs sm:text-sm font-bold border border-slate-700/80 bg-slate-900/60 hover:bg-slate-800 flex items-center gap-1.5">
+                    <span>⚗️</span> الدرس 1: التفاعلات
+                </button>
+                <button onclick="switchSection('lesson2')" id="btn-lesson2" class="nav-pill btn-bubble px-3 py-2 rounded-xl text-xs sm:text-sm font-bold border border-slate-700/80 bg-slate-900/60 hover:bg-slate-800 flex items-center gap-1.5">
+                    <span>⚖️</span> الدرس 2: المعادلة
+                </button>
+                <button onclick="switchSection('lesson3')" id="btn-lesson3" class="nav-pill btn-bubble px-3 py-2 rounded-xl text-xs sm:text-sm font-bold border border-slate-700/80 bg-slate-900/60 hover:bg-slate-800 flex items-center gap-1.5">
+                    <span>🥗</span> الدرس 3: كيمياء التغذية
+                </button>
+                <button onclick="switchSection('lab3d')" id="btn-lab3d" class="nav-pill btn-bubble px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold border border-pink-500/50 bg-gradient-to-r from-purple-900/80 to-pink-900/80 text-pink-200 flex items-center gap-1.5 shadow-md">
+                    <span>🧪</span> معمل حلا 3D
+                </button>
+                <button onclick="switchSection('quiz')" id="btn-quiz" class="nav-pill btn-bubble px-3 py-2 rounded-xl text-xs sm:text-sm font-bold border border-slate-700/80 bg-slate-900/60 hover:bg-slate-800 flex items-center gap-1.5">
+                    <span>🏆</span> اختبر نفسك
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Custom Notification Toast (Replaces alert) -->
+    <div id="toast-box" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden transition-all duration-300">
+        <div class="glass-card border-2 border-sky-400 px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-sm sm:text-base font-bold text-white">
+            <span id="toast-icon" class="text-2xl">✨</span>
+            <span id="toast-message">رسالة النظام</span>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 py-8 flex-grow">
+
+        <!-- ========================================== -->
+        <!-- SECTION 0: HOME / OVERVIEW                 -->
+        <!-- ========================================== -->
+        <section id="sec-home" class="space-y-8 animate-fadeIn">
+            <!-- Hero Section -->
+            <div class="glass-card rounded-3xl p-6 sm:p-10 relative overflow-hidden border border-sky-400/30">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                    <div class="lg:col-span-7 space-y-5">
+                        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/20 border border-purple-400/40 text-purple-200 text-xs sm:text-sm font-bold">
+                            <span>🚀</span> المنهج المطور 2026 • وزارة التربية والتعليم المصرية
+                        </div>
+                        <h2 class="text-3xl sm:text-5xl font-black leading-tight text-white">
+                            أهلاً بكِ يا <span class="gradient-text">حلا تامر</span> في عالم الكيمياء التفاعلي! 🔬✨
+                        </h2>
+                        <p class="text-slate-300 text-base sm:text-lg leading-relaxed">
+                            منصة تعليمية ثلاثية الأبعاد (3D) مصممة خصيصاً لكِ لشرح <strong>الوحدة الثانية: التفاعلات الكيميائية</strong> بالتفصيل الممل والمبسط، مع معمل افتراضي يتيح لكِ خلط الفلزات واللافلزات والأحماض والقلويات والأكاسيد والأملاح والعوامل الحفازة بنفسك!
+                        </p>
+                        <div class="flex flex-wrap gap-3 pt-2">
+                            <button onclick="switchSection('lab3d')" class="btn-bubble px-6 py-3.5 rounded-2xl bg-gradient-to-r from-sky-500 via-purple-600 to-pink-600 text-white font-extrabold text-sm sm:text-base shadow-xl flex items-center gap-2">
+                                <span>🧪</span> ابدئي التجارب في المعمل 3D الآن
+                            </button>
+                            <button onclick="switchSection('lesson1')" class="btn-bubble px-6 py-3.5 rounded-2xl bg-slate-800/90 hover:bg-slate-700 border border-sky-400/40 text-sky-200 font-bold text-sm sm:text-base flex items-center gap-2">
+                                <span>📖</span> تصفحي دروس الوحدة
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Animated 3D Molecule SVG Illustration -->
+                    <div class="lg:col-span-5 flex justify-center">
+                        <div class="relative w-64 h-64 sm:w-80 sm:h-80 animate-float flex items-center justify-center">
+                            <svg viewBox="0 0 300 300" class="w-full h-full drop-shadow-[0_0_25px_rgba(56,189,248,0.5)]">
+                                <defs>
+                                    <radialGradient id="nucleusGrad" cx="35%" cy="35%" r="65%">
+                                        <stop offset="0%" stop-color="#f472b6"/>
+                                        <stop offset="50%" stop-color="#9333ea"/>
+                                        <stop offset="100%" stop-color="#3b0764"/>
+                                    </radialGradient>
+                                    <radialGradient id="electronGrad" cx="30%" cy="30%" r="70%">
+                                        <stop offset="0%" stop-color="#ffffff"/>
+                                        <stop offset="40%" stop-color="#38bdf8"/>
+                                        <stop offset="100%" stop-color="#0284c7"/>
+                                    </radialGradient>
+                                </defs>
+                                <!-- Orbital Rings -->
+                                <ellipse cx="150" cy="150" rx="125" ry="45" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-dasharray="8 4" opacity="0.7" transform="rotate(30 150 150)">
+                                    <animateTransform attributeName="transform" type="rotate" from="30 150 150" to="390 150 150" dur="14s" repeatCount="indefinite"/>
+                                </ellipse>
+                                <ellipse cx="150" cy="150" rx="125" ry="45" fill="none" stroke="#c084fc" stroke-width="2.5" stroke-dasharray="10 5" opacity="0.7" transform="rotate(-30 150 150)">
+                                    <animateTransform attributeName="transform" type="rotate" from="-30 150 150" to="330 150 150" dur="18s" repeatCount="indefinite"/>
+                                </ellipse>
+                                <ellipse cx="150" cy="150" rx="125" ry="45" fill="none" stroke="#f472b6" stroke-width="2.5" opacity="0.7" transform="rotate(90 150 150)">
+                                    <animateTransform attributeName="transform" type="rotate" from="90 150 150" to="450 150 150" dur="12s" repeatCount="indefinite"/>
+                                </ellipse>
+                                <!-- Central Nucleus -->
+                                <circle cx="150" cy="150" r="34" fill="url(#nucleusGrad)"/>
+                                <text x="150" y="156" text-anchor="middle" fill="#fff" font-size="16" font-weight="bold">حلا ⚛️</text>
+                                <!-- Orbiting Electrons -->
+                                <circle cx="275" cy="150" r="9" fill="url(#electronGrad)">
+                                    <animateTransform attributeName="transform" type="rotate" from="0 150 150" to="360 150 150" dur="4s" repeatCount="indefinite"/>
+                                </circle>
+                                <circle cx="25" cy="150" r="9" fill="url(#electronGrad)">
+                                    <animateTransform attributeName="transform" type="rotate" from="120 150 150" to="480 150 150" dur="5s" repeatCount="indefinite"/>
+                                </circle>
+                                <circle cx="150" cy="25" r="9" fill="url(#electronGrad)">
+                                    <animateTransform attributeName="transform" type="rotate" from="240 150 150" to="600 150 150" dur="6s" repeatCount="indefinite"/>
+                                </circle>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3 Lessons Overview Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Lesson 1 Card -->
+                <div onclick="switchSection('lesson1')" class="glass-card rounded-3xl p-6 cursor-pointer flex flex-col justify-between group">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-4xl bg-sky-500/20 p-3 rounded-2xl border border-sky-400/30">⚗️</span>
+                            <span class="text-xs font-extrabold px-3 py-1 rounded-full bg-sky-500/20 text-sky-300">الدرس الأول</span>
+                        </div>
+                        <h3 class="text-xl font-extrabold text-white mb-2 group-hover:text-sky-400 transition">التفاعلات الكيميائية وأنواع المواد</h3>
+                        <p class="text-sm text-slate-300 leading-relaxed mb-4">
+                            مفهوم التفاعل الكيميائي، كسر وتكوين الروابط، دلائل حدوث التفاعل، والفرق الشامل بين الفلزات واللافلزات والأحماض والقلويات والأكاسيد والأملاح والعوامل النشطة (الحفازة).
+                        </p>
+                    </div>
+                    <div class="flex items-center justify-between text-sky-400 font-bold text-sm pt-3 border-t border-slate-700/60">
+                        <span>ادخلي شرح الدرس الأول</span>
+                        <i class="fas fa-arrow-left group-hover:-translate-x-1 transition"></i>
+                    </div>
+                </div>
+
+                <!-- Lesson 2 Card -->
+                <div onclick="switchSection('lesson2')" class="glass-card rounded-3xl p-6 cursor-pointer flex flex-col justify-between group">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-4xl bg-purple-500/20 p-3 rounded-2xl border border-purple-400/30">⚖️</span>
+                            <span class="text-xs font-extrabold px-3 py-1 rounded-full bg-purple-500/20 text-purple-300">الدرس الثاني</span>
+                        </div>
+                        <h3 class="text-xl font-extrabold text-white mb-2 group-hover:text-purple-400 transition">المعادلة الكيميائية وقانون بقاء الكتلة</h3>
+                        <p class="text-sm text-slate-300 leading-relaxed mb-4">
+                            كيفية التعبير عن التفاعل بمعادلة لفظية ورمزية موزونة، شروط التفاعل على السهم، الرموز الفيزيائية <span class="chem-formula text-purple-300">(s, l, g, aq)</span>، وتحقيق قانون بقاء الكتلة.
+                        </p>
+                    </div>
+                    <div class="flex items-center justify-between text-purple-400 font-bold text-sm pt-3 border-t border-slate-700/60">
+                        <span>ادخلي شرح الدرس الثاني</span>
+                        <i class="fas fa-arrow-left group-hover:-translate-x-1 transition"></i>
+                    </div>
+                </div>
+
+                <!-- Lesson 3 Card -->
+                <div onclick="switchSection('lesson3')" class="glass-card rounded-3xl p-6 cursor-pointer flex flex-col justify-between group">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-4xl bg-emerald-500/20 p-3 rounded-2xl border border-emerald-400/30">🥗</span>
+                            <span class="text-xs font-extrabold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300">الدرس الثالث</span>
+                        </div>
+                        <h3 class="text-xl font-extrabold text-white mb-2 group-hover:text-emerald-400 transition">كيمياء التغذية والكواشف الحيوية</h3>
+                        <p class="text-sm text-slate-300 leading-relaxed mb-4">
+                            التفاعلات الكيميائية داخل جسم الإنسان، العناصر الغذائية الأساسية (الكربوهيدرات، البروتينات، الدهون، الفيتامينات، الأملاح المعدنية، الماء) وكواشف الغذاء.
+                        </p>
+                    </div>
+                    <div class="flex items-center justify-between text-emerald-400 font-bold text-sm pt-3 border-t border-slate-700/60">
+                        <span>ادخلي شرح الدرس الثالث</span>
+                        <i class="fas fa-arrow-left group-hover:-translate-x-1 transition"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Reference Directory of Elements & Compounds -->
+            <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-700/70 pb-4">
+                    <div>
+                        <h3 class="text-2xl font-extrabold text-white flex items-center gap-2">
+                            <span>📚</span> دليل العناصر والمركبات الكيميائية في المنهج
+                        </h3>
+                        <p class="text-sm text-slate-300">اضغطي على أي تصنيف لاستعراض الأسماء والرموز والخصائص الكيميائية بالتفصيل:</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="filterCompounds('all')" class="comp-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-sky-600 text-white">الكل 🌟</button>
+                        <button onclick="filterCompounds('metal')" class="comp-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700">الفلزات 🔩</button>
+                        <button onclick="filterCompounds('nonmetal')" class="comp-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700">اللافلزات 💨</button>
+                        <button onclick="filterCompounds('acid')" class="comp-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700">الأحماض 🍋</button>
+                        <button onclick="filterCompounds('alkali')" class="comp-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700">القلويات 🧼</button>
+                        <button onclick="filterCompounds('oxide')" class="comp-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700">الأكاسيد 🔥</button>
+                        <button onclick="filterCompounds('salt')" class="comp-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700">الأملاح 🧂</button>
+                        <button onclick="filterCompounds('catalyst')" class="comp-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700">العوامل النشطة ⚡</button>
+                    </div>
+                </div>
+
+                <div id="compounds-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Populated dynamically by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECTION 1: LESSON 1 - CHEMICAL REACTIONS   -->
+        <!-- ========================================== -->
+        <section id="sec-lesson1" class="hidden space-y-8">
+            <div class="glass-card rounded-3xl p-6 sm:p-8 border-r-8 border-sky-500">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+                    <div>
+                        <span class="text-xs font-bold px-3 py-1 rounded-full bg-sky-500/20 text-sky-300">الوحدة الثانية • الدرس الأول</span>
+                        <h2 class="text-2xl sm:text-4xl font-black text-white mt-2">⚗️ التفاعلات الكيميائية وأنواع المركبات</h2>
+                    </div>
+                    <button onclick="switchSection('lab3d')" class="btn-bubble px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-sm flex items-center gap-2">
+                        <span>🧪</span> جربي تفاعلات الدرس في المعمل 3D
+                    </button>
+                </div>
+                <p class="text-slate-300 text-base leading-relaxed">
+                    تلعب التفاعلات الكيميائية دوراً أساسياً في حياتنا اليومية؛ مثل احتراق الوقود، عملية البناء الضوئي في النبات، هضم الطعام، وصناعة الأدوية والأسمدة.
+                </p>
+            </div>
+
+            <!-- Core Concepts Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Definition Box -->
+                <div class="glass-card rounded-3xl p-6 space-y-4">
+                    <h3 class="text-xl font-extrabold text-sky-400 flex items-center gap-2">
+                        <span>💡</span> ما هو التفاعل الكيميائي؟
+                    </h3>
+                    <div class="p-4 rounded-2xl bg-sky-950/50 border border-sky-500/30 text-white font-bold leading-relaxed">
+                        "هو كسر الروابط الكيميائية الموجودة بين ذرات جزيئات المواد المتفاعلة، وتكوين روابط جديدة بين ذرات جزيئات المواد الناتجة من التفاعل."
+                    </div>
+                    <ul class="space-y-2 text-sm text-slate-300">
+                        <li class="flex items-start gap-2"><span class="text-rose-400">🔸</span> <strong>التغير الفيزيائي:</strong> تغير في شكل أو حالة المادة فقط دون تغير في تركيبها الكيميائي (مثل انصهار الثلج أو ذوبان السكر).</li>
+                        <li class="flex items-start gap-2"><span class="text-emerald-400">🔹</span> <strong>التغير الكيميائي (التفاعل):</strong> ينتج عنه مواد جديدة تماماً تختلف في خواصها عن المواد الأصلية (مثل احتراق شريط الماغنسيوم أو صدأ الحديد).</li>
+                    </ul>
+                </div>
+
+                <!-- Evidence of Reaction -->
+                <div class="glass-card rounded-3xl p-6 space-y-4">
+                    <h3 class="text-xl font-extrabold text-amber-400 flex items-center gap-2">
+                        <span>🔍</span> دلائل حدوث التفاعل الكيميائي
+                    </h3>
+                    <p class="text-sm text-slate-300">كيف نعرف عملياً أن تفاعلاً كيميائياً قد حدث؟ من خلال إحدى العلامات التالية:</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                        <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center gap-2.5">
+                            <span class="text-2xl">🫧</span>
+                            <div>
+                                <div class="font-bold text-white">تصاعد غازات</div>
+                                <div class="text-xs text-slate-400">مثل تصاعد غاز الهيدروجين <span class="chem-formula text-sky-300">H₂</span></div>
+                            </div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center gap-2.5">
+                            <span class="text-2xl">🧱</span>
+                            <div>
+                                <div class="font-bold text-white">تكون راسب صلب</div>
+                                <div class="text-xs text-slate-400">مثل راسب كلوريد الفضة الأبيض <span class="chem-formula text-sky-300">AgCl</span></div>
+                            </div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center gap-2.5">
+                            <span class="text-2xl">🎨</span>
+                            <div>
+                                <div class="font-bold text-white">تغير اللون</div>
+                                <div class="text-xs text-slate-400">مثل تغير لون صبغة عباد الشمس</div>
+                            </div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center gap-2.5">
+                            <span class="text-2xl">🔥</span>
+                            <div>
+                                <div class="font-bold text-white">انبعاث حرارة أو ضوء</div>
+                                <div class="text-xs text-slate-400">مثل اشتعال الماغنسيوم بضوء مبهر</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Classification of Elements & Compounds -->
+            <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-6">
+                <h3 class="text-2xl font-extrabold text-white flex items-center gap-2">
+                    <span>🧬</span> تصنيف العناصر والمركبات الكيميائية بالتفصيل
+                </h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <!-- 1. Metals -->
+                    <div class="p-5 rounded-2xl bg-gradient-to-b from-slate-800/90 to-slate-900/90 border border-amber-500/30 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-lg font-extrabold text-amber-400">1️⃣ الفلزات (Metals)</h4>
+                            <span class="text-2xl">🔩</span>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            عناصر صلبة (ما عدا الزئبق سائل)، لها بريق معدني، جيدة التوصيل للحرارة والكهرباء، قابلة للطرق والسحب، ويميل مستوى طاقتها الأخير (1 أو 2 أو 3 إلكترون) إلى <strong>فقد الإلكترونات</strong> وتكوين <strong>أيونات موجبة</strong>.
+                        </p>
+                        <div class="text-xs bg-slate-950/70 p-3 rounded-xl space-y-1">
+                            <div class="font-bold text-amber-300">أمثلة هامة:</div>
+                            <div>• الصوديوم (<span class="chem-formula text-white">Na</span>) - نشط جداً</div>
+                            <div>• الماغنسيوم (<span class="chem-formula text-white">Mg</span>) - نشط</div>
+                            <div>• الخارصين (<span class="chem-formula text-white">Zn</span>) والحديد (<span class="chem-formula text-white">Fe</span>)</div>
+                            <div>• النحاس (<span class="chem-formula text-white">Cu</span>) - ضعيف النشاط</div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Non-metals -->
+                    <div class="p-5 rounded-2xl bg-gradient-to-b from-slate-800/90 to-slate-900/90 border border-cyan-500/30 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-lg font-extrabold text-cyan-400">2️⃣ اللافلزات (Non-metals)</h4>
+                            <span class="text-2xl">💨</span>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            عناصر صلبة أو غازية (والبروم سائل)، ليس لها بريق معدني، رديئة التوصيل للحرارة والكهرباء (ما عدا الكربون/الجرافيت)، غير قابلة للطرق، وتميل إلى <strong>اكتساب أو المشاركة بالإلكترونات</strong> وتكوين <strong>أيونات سالبة</strong>.
+                        </p>
+                        <div class="text-xs bg-slate-950/70 p-3 rounded-xl space-y-1">
+                            <div class="font-bold text-cyan-300">أمثلة هامة:</div>
+                            <div>• الأكسجين (<span class="chem-formula text-white">O₂</span>) - غاز نشط</div>
+                            <div>• الكربون (<span class="chem-formula text-white">C</span>) والكبريت (<span class="chem-formula text-white">S</span>)</div>
+                            <div>• الكلور (<span class="chem-formula text-white">Cl₂</span>) والهيدروجين (<span class="chem-formula text-white">H₂</span>)</div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Active Catalysts -->
+                    <div class="p-5 rounded-2xl bg-gradient-to-b from-slate-800/90 to-slate-900/90 border border-purple-500/30 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-lg font-extrabold text-purple-400">3️⃣ العوامل النشطة (الحفازة)</h4>
+                            <span class="text-2xl">⚡</span>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            <strong>العامل الحفاز (Catalyst):</strong> مادة كيميائية تزيد من سرعة التفاعل الكيميائي دون أن تستهلك أو تتغير خواصها الكيميائية أو كتلتها في نهاية التفاعل.
+                        </p>
+                        <div class="text-xs bg-slate-950/70 p-3 rounded-xl space-y-1">
+                            <div class="font-bold text-purple-300">أمثلة هامة:</div>
+                            <div>• ثاني أكسيد المنجنيز (<span class="chem-formula text-white">MnO₂</span>): يسرّع تفكك فوق أكسيد الهيدروجين (<span class="chem-formula text-white">H₂O₂</span>) إلى ماء وأكسجين.</div>
+                            <div>• الإنزيمات في جسم الإنسان (عوامل حفازة حيوية).</div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Acids -->
+                    <div class="p-5 rounded-2xl bg-gradient-to-b from-slate-800/90 to-slate-900/90 border border-rose-500/30 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-lg font-extrabold text-rose-400">4️⃣ الأحماض (Acids)</h4>
+                            <span class="text-2xl">🍋</span>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            مواد تذوب في الماء وتعطي <strong>أيونات الهيدروجين الموجبة (<span class="chem-formula">H⁺</span>)</strong>. طعمها لاذع، و<strong>تحمّر</strong> ورقة أو صبغة عباد الشمس البنفسجية.
+                        </p>
+                        <div class="text-xs bg-slate-950/70 p-3 rounded-xl space-y-1">
+                            <div class="font-bold text-rose-300">أمثلة هامة:</div>
+                            <div>• حمض الهيدروكلوريك (<span class="chem-formula text-white">HCl</span>)</div>
+                            <div>• حمض الكبريتيك (<span class="chem-formula text-white">H₂SO₄</span>)</div>
+                            <div>• حمض النيتريك (<span class="chem-formula text-white">HNO₃</span>) وحمض الكربونيك (<span class="chem-formula text-white">H₂CO₃</span>)</div>
+                        </div>
+                    </div>
+
+                    <!-- 5. Alkalis -->
+                    <div class="p-5 rounded-2xl bg-gradient-to-b from-slate-800/90 to-slate-900/90 border border-blue-500/30 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-lg font-extrabold text-blue-400">5️⃣ القلويات (Alkalis)</h4>
+                            <span class="text-2xl">🧼</span>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            مواد تذوب في الماء وتعطي <strong>أيونات الهيدروكسيد السالبة (<span class="chem-formula">OH⁻</span>)</strong>. طعمها قابض وملمسها صابوني، و<strong>تزرّق</strong> صبغة عباد الشمس.
+                        </p>
+                        <div class="text-xs bg-slate-950/70 p-3 rounded-xl space-y-1">
+                            <div class="font-bold text-blue-300">أمثلة هامة:</div>
+                            <div>• هيدروكسيد الصوديوم / الصودا الكاوية (<span class="chem-formula text-white">NaOH</span>)</div>
+                            <div>• هيدروكسيد البوتاسيوم (<span class="chem-formula text-white">KOH</span>)</div>
+                            <div>• هيدروكسيد الكالسيوم / ماء الجير (<span class="chem-formula text-white">Ca(OH)₂</span>)</div>
+                        </div>
+                    </div>
+
+                    <!-- 6. Oxides & Salts -->
+                    <div class="p-5 rounded-2xl bg-gradient-to-b from-slate-800/90 to-slate-900/90 border border-emerald-500/30 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-lg font-extrabold text-emerald-400">6️⃣ الأكاسيد والأملاح</h4>
+                            <span class="text-2xl">🧂</span>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            <strong>الأكاسيد:</strong> مركبات تنتج من ارتباط الأكسجين بعنصر فلزي (أكسيد قاعدي مثل <span class="chem-formula">MgO</span>) أو لافلزي (أكسيد حامضي مثل <span class="chem-formula">CO₂</span>).<br>
+                            <strong>الأملاح:</strong> تنتج من تفاعل حمض مع قلوي (تفاعل التعادل) مثل ملح الطعام (<span class="chem-formula">NaCl</span>).
+                        </p>
+                        <div class="text-xs bg-slate-950/70 p-3 rounded-xl space-y-1">
+                            <div class="font-bold text-emerald-300">أمثلة هامة:</div>
+                            <div>• أكسيد الماغنسيوم (<span class="chem-formula text-white">MgO</span>) وثاني أكسيد الكربون (<span class="chem-formula text-white">CO₂</span>)</div>
+                            <div>• كلوريد الصوديوم (<span class="chem-formula text-white">NaCl</span>) وكربونات الكالسيوم (<span class="chem-formula text-white">CaCO₃</span>)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Chemical Reactions in Lesson 1 -->
+            <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-4">
+                <h3 class="text-xl font-extrabold text-white flex items-center gap-2">
+                    <span>🔥</span> أهم التفاعلات الكيميائية المقررة في الدرس الأول
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-2xl bg-slate-900/80 border border-amber-500/30 space-y-2">
+                        <div class="font-bold text-amber-400">1. تفاعل الفلزات مع الأكسجين (احتراق شريط الماغنسيوم):</div>
+                        <p class="text-xs text-slate-300">يشتعل شريط الماغنسيوم بضوء أبيض مبهر ويتحول إلى مسحوق أبيض من أكسيد الماغنسيوم (أكسيد قاعدي يذوب في الماء مكوناً قلوياً يزرق عباد الشمس):</p>
+                        <div class="bg-slate-950 p-3 rounded-xl text-center chem-formula text-sky-300 text-sm sm:text-base">
+                            2Mg + O₂ <span class="text-amber-400">──Δ──▶</span> 2MgO
+                        </div>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-slate-900/80 border border-cyan-500/30 space-y-2">
+                        <div class="font-bold text-cyan-400">2. تفاعل اللافلزات مع الأكسجين (احتراق الكربون/الفحم):</div>
+                        <p class="text-xs text-slate-300">يتحد الكربون مع الأكسجين بالتسخين مكوناً غاز ثاني أكسيد الكربون (أكسيد حامضي يذوب في الماء مكوناً حمض الكربونيك الذي يحمر عباد الشمس):</p>
+                        <div class="bg-slate-950 p-3 rounded-xl text-center chem-formula text-cyan-300 text-sm sm:text-base">
+                            C + O₂ <span class="text-amber-400">──Δ──▶</span> CO₂ ↑
+                        </div>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-slate-900/80 border border-rose-500/30 space-y-2">
+                        <div class="font-bold text-rose-400">3. تفاعل الفلزات النشطة مع الأحماض المخففة:</div>
+                        <p class="text-xs text-slate-300">يتفاعل شريط الماغنسيوم مع حمض الهيدروكلوريك المخفف ويتكون ملح كلوريد الماغنسيوم ويتصاعد غاز الهيدروجين الذي يشتعل بفرقعة:</p>
+                        <div class="bg-slate-950 p-3 rounded-xl text-center chem-formula text-rose-300 text-sm sm:text-base">
+                            Mg + 2HCl <span class="text-slate-400">(dil)</span> ──▶ MgCl₂ + H₂ ↑
+                        </div>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-slate-900/80 border border-emerald-500/30 space-y-2">
+                        <div class="font-bold text-emerald-400">4. تفاعل التعادل (حمض + قلوي ──▶ ملح + ماء):</div>
+                        <p class="text-xs text-slate-300">يتفاعل حمض الهيدروكلوريك مع هيدروكسيد الصوديوم فينتج ملح الطعام (كلوريد الصوديوم) والماء المتعادل:</p>
+                        <div class="bg-slate-950 p-3 rounded-xl text-center chem-formula text-emerald-300 text-sm sm:text-base">
+                            HCl + NaOH ──▶ NaCl + H₂O
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECTION 2: LESSON 2 - CHEMICAL EQUATION    -->
+        <!-- ========================================== -->
+        <section id="sec-lesson2" class="hidden space-y-8">
+            <div class="glass-card rounded-3xl p-6 sm:p-8 border-r-8 border-purple-500">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+                    <div>
+                        <span class="text-xs font-bold px-3 py-1 rounded-full bg-purple-500/20 text-purple-300">الوحدة الثانية • الدرس الثاني</span>
+                        <h2 class="text-2xl sm:text-4xl font-black text-white mt-2">⚖️ المعادلة الكيميائية وقانون بقاء الكتلة</h2>
+                    </div>
+                </div>
+                <p class="text-slate-300 text-base leading-relaxed">
+                    يعبّر الكيميائيون عن التفاعل الكيميائي بصورة مختصرة ودقيقة تسمى <strong>المعادلة الكيميائية الرمزية الموزونة</strong>، والتي توضح المتفاعلات والنواتج وشروط التفاعل.
+                </p>
+            </div>
+
+            <!-- Anatomy of a Chemical Equation -->
+            <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-6">
+                <h3 class="text-xl font-extrabold text-purple-300 flex items-center gap-2">
+                    <span>🧩</span> مكونات المعادلة الكيميائية الرمزية
+                </h3>
+
+                <div class="p-6 rounded-2xl bg-slate-950/90 border border-purple-500/40 text-center space-y-4">
+                    <div class="chem-formula text-xl sm:text-3xl text-white tracking-wider">
+                        <span class="text-sky-400">2Mg<sub>(s)</sub> + O<sub>2(g)</sub></span>
+                        <span class="text-amber-400 mx-3">──Δ──▶</span>
+                        <span class="text-emerald-400">2MgO<sub>(s)</sub></span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs sm:text-sm pt-2">
+                        <div class="p-3 rounded-xl bg-sky-950/60 border border-sky-500/30 text-sky-200">
+                            <strong>الطرف الأيسر (المتفاعلات):</strong> المواد الداخلة في التفاعل قبل السهم.
+                        </div>
+                        <div class="p-3 rounded-xl bg-amber-950/60 border border-amber-500/30 text-amber-200">
+                            <strong>السهم وشروط التفاعل:</strong> يحدد اتجاه التفاعل، ويُكتب فوقه الحرارة (<span class="chem-formula">Δ</span>) أو العامل الحفاز أو الضغط.
+                        </div>
+                        <div class="p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/30 text-emerald-200">
+                            <strong>الطرف الأيمن (النواتج):</strong> المواد الجديدة الناتجة بعد السهم.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Physical State Symbols -->
+                <div>
+                    <h4 class="text-lg font-bold text-white mb-3">📌 رموز الحالة الفيزيائية أسفل يمين الصيغة:</h4>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                        <div class="p-4 rounded-2xl bg-slate-800/80 border border-slate-700">
+                            <div class="chem-formula text-2xl text-amber-400 mb-1">(s)</div>
+                            <div class="font-bold text-white text-sm">مادة صلبة (Solid)</div>
+                            <div class="text-xs text-slate-400">مثل المغنيسيوم <span class="chem-formula">Mg(s)</span></div>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-slate-800/80 border border-slate-700">
+                            <div class="chem-formula text-2xl text-sky-400 mb-1">(l)</div>
+                            <div class="font-bold text-white text-sm">مادة سائلة (Liquid)</div>
+                            <div class="text-xs text-slate-400">مثل الماء النقي <span class="chem-formula">H₂O(l)</span></div>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-slate-800/80 border border-slate-700">
+                            <div class="chem-formula text-2xl text-purple-400 mb-1">(g)</div>
+                            <div class="font-bold text-white text-sm">مادة غازية (Gas)</div>
+                            <div class="text-xs text-slate-400">مثل الأكسجين <span class="chem-formula">O₂(g)</span></div>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-slate-800/80 border border-slate-700">
+                            <div class="chem-formula text-2xl text-emerald-400 mb-1">(aq)</div>
+                            <div class="font-bold text-white text-sm">محلول مائي (Aqueous)</div>
+                            <div class="text-xs text-slate-400">مثل حمض <span class="chem-formula">HCl(aq)</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Law of Conservation of Mass & Interactive Balancer -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-5 glass-card rounded-3xl p-6 space-y-4">
+                    <h3 class="text-xl font-extrabold text-amber-400 flex items-center gap-2">
+                        <span>⚖️</span> قانون بقاء الكتلة
+                    </h3>
+                    <div class="p-4 rounded-2xl bg-amber-950/40 border border-amber-500/30 text-white font-bold text-sm leading-relaxed">
+                        "مجموع كتل المواد الداخلة في التفاعل الكيميائي يساوي مجموع كتل المواد الناتجة عنه."
+                    </div>
+                    <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                        <strong>علل: يجب أن تكون المعادلة الكيميائية موزونة؟</strong><br>
+                        حتى يتساوى عدد ذرات كل عنصر في المواد المتفاعلة مع عدد ذرات نفس العنصر في المواد الناتجة، تحقيقاً لقانون بقاء الكتلة.
+                    </p>
+                    <div class="p-3 rounded-xl bg-slate-900/90 text-xs text-slate-300 space-y-1">
+                        <div class="font-bold text-sky-300">مثال حسابي (علماً بأن Mg=24, O=16):</div>
+                        <div>• كتل المتفاعلات (<span class="chem-formula">2Mg + O₂</span>) = (2×24) + (2×16) = 48 + 32 = <strong>80 جرام</strong></div>
+                        <div>• كتل النواتج (<span class="chem-formula">2MgO</span>) = 2 × (24 + 16) = 2 × 40 = <strong>80 جرام</strong> ✅</div>
+                    </div>
+                </div>
+
+                <!-- Interactive Equation Balancing Trainer for Hala -->
+                <div class="lg:col-span-7 glass-card rounded-3xl p-6 space-y-4 border border-purple-400/40">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-extrabold text-white flex items-center gap-2">
+                            <span>🎮</span> تحدي موازنة المعادلات لحلا تامر
+                        </h3>
+                        <span class="text-xs px-3 py-1 rounded-full bg-purple-600 text-white font-bold">تدريب تفاعلي</span>
+                    </div>
+                    <p class="text-xs sm:text-sm text-slate-300">اختاري الأرقام (المعاملات) الصحيحة لموازنة المعادلات الكيميائية التالية:</p>
+
+                    <div id="balancer-container" class="space-y-4">
+                        <!-- Equation 1 -->
+                        <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-700 space-y-3">
+                            <div class="text-xs font-bold text-sky-300">المعادلة (1): تكوين الماء من الهيدروجين والأكسجين</div>
+                            <div class="flex flex-wrap items-center justify-center gap-2 chem-formula text-lg sm:text-xl">
+                                <select id="eq1-a" class="bg-slate-800 border border-sky-400 rounded-lg px-2 py-1 text-amber-300 font-bold">
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                </select>
+                                <span>H₂ +</span>
+                                <select id="eq1-b" class="bg-slate-800 border border-sky-400 rounded-lg px-2 py-1 text-amber-300 font-bold">
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                </select>
+                                <span>O₂ ──▶</span>
+                                <select id="eq1-c" class="bg-slate-800 border border-sky-400 rounded-lg px-2 py-1 text-amber-300 font-bold">
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="4">4</option>
+                                </select>
+                                <span>H₂O</span>
+                            </div>
+                            <div class="flex items-center justify-between pt-1">
+                                <button onclick="checkEquation(1)" class="btn-bubble px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold">تحققي من الوزن ✨</button>
+                                <span id="eq1-status" class="text-xs font-bold text-slate-400">بانتظار إجابتك يا حلا...</span>
+                            </div>
+                        </div>
+
+                        <!-- Equation 2 -->
+                        <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-700 space-y-3">
+                            <div class="text-xs font-bold text-emerald-300">المعادلة (2): تفاعل الصوديوم مع الكلور لتكوين ملح الطعام</div>
+                            <div class="flex flex-wrap items-center justify-center gap-2 chem-formula text-lg sm:text-xl">
+                                <select id="eq2-a" class="bg-slate-800 border border-emerald-400 rounded-lg px-2 py-1 text-amber-300 font-bold">
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                </select>
+                                <span>Na +</span>
+                                <select id="eq2-b" class="bg-slate-800 border border-emerald-400 rounded-lg px-2 py-1 text-amber-300 font-bold">
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                </select>
+                                <span>Cl₂ ──▶</span>
+                                <select id="eq2-c" class="bg-slate-800 border border-emerald-400 rounded-lg px-2 py-1 text-amber-300 font-bold">
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="4">4</option>
+                                </select>
+                                <span>NaCl</span>
+                            </div>
+                            <div class="flex items-center justify-between pt-1">
+                                <button onclick="checkEquation(2)" class="btn-bubble px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold">تحققي من الوزن ✨</button>
+                                <span id="eq2-status" class="text-xs font-bold text-slate-400">بانتظار إجابتك يا حلا...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECTION 3: LESSON 3 - CHEMISTRY OF NUTRITION-->
+        <!-- ========================================== -->
+        <section id="sec-lesson3" class="hidden space-y-8">
+            <div class="glass-card rounded-3xl p-6 sm:p-8 border-r-8 border-emerald-500">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+                    <div>
+                        <span class="text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300">الوحدة الثانية • الدرس الثالث</span>
+                        <h2 class="text-2xl sm:text-4xl font-black text-white mt-2">🥗 كيمياء التغذية والعناصر الغذائية</h2>
+                    </div>
+                    <button onclick="switchSection('lab3d')" class="btn-bubble px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center gap-2">
+                        <span>🧪</span> جربي كواشف الغذاء في المعمل 3D
+                    </button>
+                </div>
+                <p class="text-slate-300 text-base leading-relaxed">
+                    <strong>كيمياء التغذية:</strong> هي العلم الذي يدرس التركيب الكيميائي للمواد الغذائية والتفاعلات الكيميائية التي تحدث داخل جسم الكائن الحي للاستفادة من الغذاء في إنتاج الطاقة والنمو والوقاية من الأمراض.
+                </p>
+            </div>
+
+            <!-- 6 Essential Nutrients Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <!-- Carbohydrates -->
+                <div class="glass-card rounded-3xl p-5 border-t-4 border-amber-400 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-extrabold text-amber-300">1. الكربوهيدرات (Carbohydrates)</h3>
+                        <span class="text-3xl">🍞</span>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        مركبات عضوية تتكون من عناصر (الكربون <span class="chem-formula">C</span>، الهيدروجين <span class="chem-formula">H</span>، الأكسجين <span class="chem-formula">O</span>)، وتعتبر <strong>المصدر الرئيسي والسريع للطاقة</strong> في الجسم.
+                    </p>
+                    <div class="text-xs bg-slate-900/80 p-3 rounded-xl space-y-1">
+                        <div>• <strong>سكريات بسيطة:</strong> مثل الجلوكوز (<span class="chem-formula text-amber-300">C₆H₁₂O₆</span>) والفركتوز (في الفواكه والعسل).</div>
+                        <div>• <strong>كربوهيدرات معقدة:</strong> مثل النشا (في الخبز والأرز والبطاطس) والسليلوز.</div>
+                    </div>
+                </div>
+
+                <!-- Proteins -->
+                <div class="glass-card rounded-3xl p-5 border-t-4 border-rose-400 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-extrabold text-rose-300">2. البروتينات (Proteins)</h3>
+                        <span class="text-3xl">🥩</span>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        مركبات عضوية معقدة تدخل في تركيبها عناصر (<span class="chem-formula">C, H, O, N</span>)، وتتكون من وحدات بنائية تسمى <strong>الأحماض الأمينية</strong>. مسؤولة عن <strong>نمو الجسم وبناء العضلات وتعويض الخلايا التالفة</strong>.
+                    </p>
+                    <div class="text-xs bg-slate-900/80 p-3 rounded-xl space-y-1">
+                        <div>• <strong>مصادر حيوانية:</strong> اللحوم، الأسماك، البيض، الألبان.</div>
+                        <div>• <strong>مصادر نباتية:</strong> البقوليات (الفول، العدس، الحمص).</div>
+                    </div>
+                </div>
+
+                <!-- Lipids / Fats -->
+                <div class="glass-card rounded-3xl p-5 border-t-4 border-yellow-400 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-extrabold text-yellow-300">3. الدهون والليبيدات (Lipids)</h3>
+                        <span class="text-3xl">🥑</span>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        مركبات عضوية تعطي <strong>ضعف الطاقة</strong> التي تعطيها الكربوهيدرات، وتعمل كطبقة عازلة تحت الجلد لحفظ حرارة الجسم، وتذيب الفيتامينات (<span class="chem-formula">A, D, E, K</span>).
+                    </p>
+                    <div class="text-xs bg-slate-900/80 p-3 rounded-xl space-y-1">
+                        <div>• <strong>مصادر صحية:</strong> زيت الزيتون، المكسرات، الأفوكادو، الأسماك الدهنية.</div>
+                        <div>• <strong>تنبيه صحي:</strong> الإفراط في الدهون المشبعة يسبب السمنة وتصلب الشرايين.</div>
+                    </div>
+                </div>
+
+                <!-- Vitamins -->
+                <div class="glass-card rounded-3xl p-5 border-t-4 border-purple-400 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-extrabold text-purple-300">4. الفيتامينات (Vitamins)</h3>
+                        <span class="text-3xl">🍊</span>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        مركبات عضوية يحتاجها الجسم بكميات ضئيلة جداً لتنظيم العمليات الحيوية والوقاية من الأمراض.
+                    </p>
+                    <div class="text-xs bg-slate-900/80 p-3 rounded-xl space-y-1">
+                        <div>• <strong>فيتامين C:</strong> يقوي المناعة (في البرتقال والليمون والجوافة).</div>
+                        <div>• <strong>فيتامين D:</strong> يساعد على امتصاص الكالسيوم وصحة العظام (أشعة الشمس).</div>
+                        <div>• <strong>فيتامين A:</strong> يقوي الإبصار وصحة الجلد (الجزر والسبانخ).</div>
+                    </div>
+                </div>
+
+                <!-- Mineral Salts -->
+                <div class="glass-card rounded-3xl p-5 border-t-4 border-sky-400 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-extrabold text-sky-300">5. الأملاح المعدنية (Minerals)</h3>
+                        <span class="text-3xl">🥛</span>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        عناصر غير عضوية ضرورية لبناء العظام وتكوين الدم وتنظيم نبضات القلب والأعصاب.
+                    </p>
+                    <div class="text-xs bg-slate-900/80 p-3 rounded-xl space-y-1">
+                        <div>• <strong>الكالسيوم (Ca):</strong> بناء العظام والأسنان (الألبان).</div>
+                        <div>• <strong>الحديد (Fe):</strong> يدخل في تركيب هيموجلوبين الدم والوقاية من الأنيميا (الكبدة والسبانخ).</div>
+                        <div>• <strong>اليود (I):</strong> سلامة الغدة الدرقية (الأسماك البحرية).</div>
+                    </div>
+                </div>
+
+                <!-- Water -->
+                <div class="glass-card rounded-3xl p-5 border-t-4 border-cyan-400 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-extrabold text-cyan-300">6. الماء (H₂O)</h3>
+                        <span class="text-3xl">💧</span>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        يمثل حوالي <strong>60% إلى 70%</strong> من كتلة جسم الإنسان، وهو الوسط الذي تتم فيه جميع التفاعلات الكيميائية الحيوية داخل الخلايا.
+                    </p>
+                    <div class="text-xs bg-slate-900/80 p-3 rounded-xl space-y-1">
+                        <div>• يذيب المواد الغذائية وينقلها عبر الدم.</div>
+                        <div>• ينظم درجة حرارة الجسم عن طريق العرق.</div>
+                        <div>• يخلص الجسم من الفضلات الضارة.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chemical Reagents for Food Detection Table -->
+            <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-4">
+                <h3 class="text-xl font-extrabold text-white flex items-center gap-2">
+                    <span>🧪</span> جدول الكواشف الكيميائية للكشف عن العناصر الغذائية
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right border-collapse text-xs sm:text-sm">
+                        <thead>
+                            <tr class="bg-slate-800/90 text-sky-300 border-b border-slate-700">
+                                <th class="p-3 rounded-tr-xl">العنصر الغذائي</th>
+                                <th class="p-3">الكاشف المستخدم</th>
+                                <th class="p-3">اللون الأصلي للكاشف</th>
+                                <th class="p-3 rounded-tl-xl">النتيجة الإيجابية (التغير اللوني)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800">
+                            <tr class="hover:bg-slate-800/40">
+                                <td class="p-3 font-bold text-amber-300">النشا (كربوهيدرات معقدة)</td>
+                                <td class="p-3 font-bold">محلول اليود (Iodine)</td>
+                                <td class="p-3 text-amber-500">بني / برتقالي</td>
+                                <td class="p-3 font-bold text-indigo-400">يتحول إلى اللون الأزرق الداكن 🔵</td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/40">
+                                <td class="p-3 font-bold text-sky-300">سكر الجلوكوز (سكر أحادي)</td>
+                                <td class="p-3 font-bold">كاشف بندكت الأزرق + تسخين</td>
+                                <td class="p-3 text-sky-400">أزرق</td>
+                                <td class="p-3 font-bold text-orange-400">يتحول إلى اللون البرتقالي / الأحمر الطوبي 🟠</td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/40">
+                                <td class="p-3 font-bold text-rose-300">البروتينات</td>
+                                <td class="p-3 font-bold">كاشف البيوريت (Biuret)</td>
+                                <td class="p-3 text-sky-400">أزرق فاتح</td>
+                                <td class="p-3 font-bold text-purple-400">يتحول إلى اللون البنفسجي 🟣</td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/40">
+                                <td class="p-3 font-bold text-yellow-300">الدهون</td>
+                                <td class="p-3 font-bold">كاشف سودان 4 (Sudan IV)</td>
+                                <td class="p-3 text-rose-400">أحمر داكن</td>
+                                <td class="p-3 font-bold text-red-500">تظهر بقعة زيتية حمراء متوهجة 🔴</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECTION 4: INTERACTIVE 3D CHEMISTRY LAB    -->
+        <!-- ========================================== -->
+        <section id="sec-lab3d" class="hidden space-y-6">
+            <div class="glass-card rounded-3xl p-6 sm:p-8 border border-pink-500/40 space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-700/70 pb-4">
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/20 text-pink-300 text-xs font-bold mb-1">
+                            <span>🔬</span> محاكاة ثلاثية الأبعاد تفاعلية 3D
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-black text-white">
+                            معمل الكيمياء التفاعلي الخاص بالطالبة <span class="gradient-text">حلا تامر</span> 🧪✨
+                        </h2>
+                        <p class="text-xs sm:text-sm text-slate-300 mt-1">
+                            اختاري مادتين (فلز، لافلز، حمض، قلوي، أكسيد، عامل نشط، أو عنصر غذائي) ثم اضغطي على <strong>"ابدئي التفاعل الآن"</strong> وشاهدي التفاعل 3D! (يمكنك تدوير الكأس بالماوس أو اللمس).
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="resetLab()" class="btn-bubble px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 text-xs sm:text-sm font-bold flex items-center gap-2">
+                            <i class="fas fa-rotate-right"></i> تفريغ الكأس
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Lab Layout: Controls on Right, 3D Flask & Results on Left -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    <!-- Reactants Selection Panel -->
+                    <div class="lg:col-span-6 space-y-5">
+                        <!-- Reactant A -->
+                        <div class="p-4 rounded-2xl bg-slate-900/90 border border-sky-500/30 space-y-3">
+                            <label class="block text-sm font-extrabold text-sky-300">
+                                1️⃣ اختاري المادة الأولى (المتفاعل الأول):
+                            </label>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" id="reactant1-buttons">
+                                <!-- Buttons injected by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Reactant B -->
+                        <div class="p-4 rounded-2xl bg-slate-900/90 border border-purple-500/30 space-y-3">
+                            <label class="block text-sm font-extrabold text-purple-300">
+                                2️⃣ اختاري المادة الثانية / الكاشف / العامل النشط:
+                            </label>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" id="reactant2-buttons">
+                                <!-- Buttons injected by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Heat / Catalyst Toggle + Trigger Button -->
+                        <div class="flex flex-col sm:flex-row items-center gap-3">
+                            <label class="flex items-center gap-2 px-4 py-3 rounded-2xl bg-amber-950/50 border border-amber-500/40 cursor-pointer w-full sm:w-auto justify-center">
+                                <input type="checkbox" id="lab-heat-toggle" class="w-4 h-4 accent-amber-500">
+                                <span class="text-xs sm:text-sm font-bold text-amber-300">🔥 تسخين اللهب (<span class="chem-formula">Δ</span>)</span>
+                            </label>
+
+                            <button onclick="executeReaction()" class="btn-bubble w-full sm:flex-grow py-3.5 px-6 rounded-2xl bg-gradient-to-r from-sky-500 via-purple-600 to-pink-600 text-white font-black text-base shadow-xl flex items-center justify-center gap-2">
+                                <span>⚡</span> ابدئي التفاعل الكيميائي الآن!
+                            </button>
+                        </div>
+
+                        <!-- Preset Quick Experiments -->
+                        <div class="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-2">
+                            <div class="text-xs font-bold text-slate-400">🌟 تجارب سريعة مقترحة لحلا:</div>
+                            <div class="flex flex-wrap gap-2">
+                                <button onclick="loadPreset('Mg', 'O2', true)" class="text-xs px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30">🔥 احتراق الماغنسيوم</button>
+                                <button onclick="loadPreset('Mg', 'HCl', false)" class="text-xs px-3 py-1.5 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30">🫧 فلز + حمض</button>
+                                <button onclick="loadPreset('HCl', 'NaOH', false)" class="text-xs px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30">🧂 تفاعل التعادل</button>
+                                <button onclick="loadPreset('H2O2', 'MnO2', false)" class="text-xs px-3 py-1.5 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30">⚡ تفكك بالعامل الحفاز</button>
+                                <button onclick="loadPreset('C', 'O2', true)" class="text-xs px-3 py-1.5 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/30">💨 احتراق الكربون</button>
+                                <button onclick="loadPreset('Starch', 'Iodine', false)" class="text-xs px-3 py-1.5 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/30">🍞 كشف النشا</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3D Viewport & Scientific Observation Output -->
+                    <div class="lg:col-span-6 space-y-4">
+                        <div class="relative">
+                            <div id="lab-canvas-container"></div>
+                            <!-- Overlay Selected Tags -->
+                            <div class="absolute top-3 right-3 flex flex-wrap gap-2 pointer-events-none">
+                                <span id="badge-r1" class="px-3 py-1 rounded-full bg-sky-900/90 border border-sky-400 text-sky-200 text-xs font-bold">المادة 1: لم تُحدد</span>
+                                <span id="badge-r2" class="px-3 py-1 rounded-full bg-purple-900/90 border border-purple-400 text-purple-200 text-xs font-bold">المادة 2: لم تُحدد</span>
+                            </div>
+                            <div class="absolute bottom-3 left-3 text-[11px] text-slate-400 bg-slate-950/80 px-2.5 py-1 rounded-lg pointer-events-none">
+                                🖱️ اسحبي لتدوير الكأس 3D
+                            </div>
+                        </div>
+
+                        <!-- Reaction Result Card -->
+                        <div id="reaction-output-card" class="p-5 rounded-2xl bg-slate-900/95 border border-sky-500/40 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h4 class="text-base font-extrabold text-sky-300 flex items-center gap-2">
+                                    <span>📋</span> تقرير المشاهدة والاستنتاج العلمي:
+                                </h4>
+                                <span id="reaction-type-tag" class="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 font-bold">جاهز للتجربة</span>
+                            </div>
+                            <div id="reaction-equation-display" class="p-3 rounded-xl bg-slate-950 text-center chem-formula text-lg text-amber-300 border border-slate-800">
+                                اختاري مادتين لبدء التفاعل...
+                            </div>
+                            <p id="reaction-explanation" class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                                مرحباً بكِ يا دكتورة <strong>حلا تامر</strong> في معملك الخاص! اختاري أي عنصر فلزي أو لافلزي أو حمض أو قلوي أو عامل حفاز وشاهدي التغير اللوني والفقاعات والرواسب في الكأس ثلاثي الأبعاد.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECTION 5: INTERACTIVE QUIZ FOR HALA       -->
+        <!-- ========================================== -->
+        <section id="sec-quiz" class="hidden space-y-6">
+            <div class="glass-card rounded-3xl p-6 sm:p-8 border border-amber-400/40 space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-700 pb-4">
+                    <div>
+                        <span class="text-xs font-bold px-3 py-1 rounded-full bg-amber-500/20 text-amber-300">تقييم شامل للوحدة الثانية</span>
+                        <h2 class="text-2xl sm:text-3xl font-black text-white mt-1">🏆 تحدي التفوق للطالبة حلا تامر</h2>
+                    </div>
+                    <div class="px-4 py-2 rounded-2xl bg-slate-900 border border-amber-500/40 text-amber-300 font-extrabold text-sm">
+                        النتيجة الحالية: <span id="quiz-score">0</span> / <span id="quiz-total">8</span> ⭐
+                    </div>
+                </div>
+
+                <div id="quiz-questions-container" class="space-y-5">
+                    <!-- Populated dynamically by JS -->
+                </div>
+
+                <div class="flex justify-center pt-4">
+                    <button onclick="resetQuiz()" class="btn-bubble px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-extrabold text-sm shadow-lg">
+                        🔄 إعادة الاختبار من جديد
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="glass-card border-t border-sky-500/20 rounded-t-3xl mx-2 sm:mx-6 mt-8 py-5 px-4 text-center">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs sm:text-sm text-slate-300">
+            <div>
+                تم التصميم والتطوير خصيصاً للطالبة المتفوقة <span class="font-extrabold text-sky-400">حلا تامر</span> 🌟 | الصف الثاني الإعدادي 2026
+            </div>
+            <div class="text-slate-400">
+                الوحدة الثانية: التفاعلات الكيميائية • المعادلة الكيميائية • كيمياء التغذية ⚛️🧪
+            </div>
+        </div>
+    </footer>
+
+    <!-- ========================================== -->
+    <!-- JAVASCRIPT LOGIC: 3D, LAB, DATA & QUIZZES  -->
+    <!-- ========================================== -->
+    <script>
+        // ------------------------------------------
+        // 1. AUDIO EFFECTS USING TONE.JS
+        // ------------------------------------------
+        let audioInitialized = false;
+        function playSound(type) {
+            try {
+                if (!audioInitialized) {
+                    Tone.start();
+                    audioInitialized = true;
+                }
+                const synth = new Tone.PolySynth(Tone.Synth).toDestination();
+                if (type === 'click') {
+                    synth.triggerAttackRelease("C5", "32n");
+                } else if (type === 'success') {
+                    synth.triggerAttackRelease(["C5", "E5", "G5", "C6"], "16n");
+                } else if (type === 'reaction') {
+                    const noise = new Tone.NoiseSynth({
+                        noise: { type: "pink" },
+                        envelope: { attack: 0.05, decay: 0.4, sustain: 0.1, release: 0.5 }
+                    }).toDestination();
+                    noise.triggerAttackRelease("8n");
+                    synth.triggerAttackRelease(["D4", "A4", "F#5"], "8n");
+                } else if (type === 'error') {
+                    synth.triggerAttackRelease(["G3", "F#3"], "16n");
+                }
+            } catch (e) {
+                // Silent fallback if audio blocked
+            }
+        }
+
+        // Custom Toast Notification
+        function showToast(msg, icon = '✨') {
+            const box = document.getElementById('toast-box');
+            document.getElementById('toast-message').textContent = msg;
+            document.getElementById('toast-icon').textContent = icon;
+            box.classList.remove('hidden');
+            clearTimeout(window.toastTimer);
+            window.toastTimer = setTimeout(() => {
+                box.classList.add('hidden');
+            }, 3500);
+        }
+
+        // ------------------------------------------
+        // 2. NAVIGATION BETWEEN LESSONS & SECTIONS
+        // ------------------------------------------
+        function switchSection(secId) {
+            playSound('click');
+            const sections = ['home', 'lesson1', 'lesson2', 'lesson3', 'lab3d', 'quiz'];
+            sections.forEach(id => {
+                document.getElementById('sec-' + id).classList.add('hidden');
+                const btn = document.getElementById('btn-' + id);
+                if (btn) btn.classList.remove('active');
+            });
+            document.getElementById('sec-' + secId).classList.remove('hidden');
+            const activeBtn = document.getElementById('btn-' + secId);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            if (secId === 'lab3d') {
+                setTimeout(resizeLabCanvas, 50);
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ------------------------------------------
+        // 3. COMPOUNDS & ELEMENTS DIRECTORY DATA
+        // ------------------------------------------
+        const compoundsDirectory = [
+            { name: "الماغنسيوم", symbol: "Mg", type: "metal", typeLabel: "فلز نشط 🔩", color: "amber", desc: "فلز فضي اللون يشتعل بضوء مبهر في الهواء مكوناً أكسيد الماغنسيوم القاعدي." },
+            { name: "الصوديوم", symbol: "Na", type: "metal", typeLabel: "فلز نشط جداً 🔩", color: "amber", desc: "فلز لين شديد النشاط الكيميائي يحفظ تحت سطح الكيروسين ويتفاعل بعنف مع الماء." },
+            { name: "الخارصين (الزنك)", symbol: "Zn", type: "metal", typeLabel: "فلز نشط 🔩", color: "amber", desc: "يتفاعل مع الأحماض المخففة ويحل محل الهيدروجين مكوناً ملح كلوريد الخارصين." },
+            { name: "الأكسجين", symbol: "O₂", type: "nonmetal", typeLabel: "لافلز غازي 💨", color: "cyan", desc: "غاز يساعد على الاشتعال، يتحد مع الفلزات مكوناً أكاسيد قاعدية ومع اللافلزات مكوناً أكاسيد حامضية." },
+            { name: "الكربون (الفحم)", symbol: "C", type: "nonmetal", typeLabel: "لافلز صلب 💨", color: "cyan", desc: "عنصر لافلزي صلب موصل للكهرباء، يحترق في الأكسجين مكوناً غاز ثاني أكسيد الكربون." },
+            { name: "الكلور", symbol: "Cl₂", type: "nonmetal", typeLabel: "لافلز نشط 💨", color: "cyan", desc: "غاز لافلزي نشط يتحد مع الصوديوم لتكوين ملح كلوريد الصوديوم (ملح الطعام)." },
+            { name: "حمض الهيدروكلوريك", symbol: "HCl", type: "acid", typeLabel: "حمض قوي 🍋", color: "rose", desc: "يعطي أيونات الهيدروجين (H⁺) في الماء ويحمر صبغة عباد الشمس، ويُفرز في المعدة لهضم الطعام." },
+            { name: "حمض الكبريتيك", symbol: "H₂SO₄", type: "acid", typeLabel: "حمض معدني 🍋", color: "rose", desc: "من أهم الأحماض الصناعية القوية، يحمر عباد الشمس ويتفاعل مع الفلزات والقلويات." },
+            { name: "هيدروكسيد الصوديوم", symbol: "NaOH", type: "alkali", typeLabel: "قلوي قوي 🧼", color: "blue", desc: "يُعرف بالصودا الكاوية، يذوب في الماء معطياً أيونات (OH⁻) ويزرق صبغة عباد الشمس." },
+            { name: "هيدروكسيد الكالسيوم", symbol: "Ca(OH)₂", type: "alkali", typeLabel: "قلوي (ماء الجير) 🧼", color: "blue", desc: "يُعرف بماء الجير الرائق، يتعكر عند إمرار غاز ثاني أكسيد الكربون فيه." },
+            { name: "أكسيد الماغنسيوم", symbol: "MgO", type: "oxide", typeLabel: "أكسيد قاعدي 🔥", color: "emerald", desc: "مسحوق أبيض ينتج من احتراق الماغنسيوم، يذوب في الماء مكوناً هيدروكسيد الماغنسيوم القلوي." },
+            { name: "ثاني أكسيد الكربون", symbol: "CO₂", type: "oxide", typeLabel: "أكسيد حامضي 🔥", color: "emerald", desc: "غاز ينتج من احتراق الكربون والتنفس، يذوب في الماء مكوناً حمض الكربونيك." },
+            { name: "كلوريد الصوديوم", symbol: "NaCl", type: "salt", typeLabel: "ملح متعادل 🧂", color: "teal", desc: "ملح الطعام المعروف، ينتج من تفاعل التعادل بين حمض الهيدروكلوريك وهيدروكسيد الصوديوم." },
+            { name: "كربونات الكالسيوم", symbol: "CaCO₃", type: "salt", typeLabel: "ملح لا يذوب 🧂", color: "teal", desc: "راسب أبيض يتكون عند تعكر ماء الجير الرائق بغاز ثاني أكسيد الكربون." },
+            { name: "ثاني أكسيد المنجنيز", symbol: "MnO₂", type: "catalyst", typeLabel: "عامل نشط (حفاز) ⚡", color: "purple", desc: "عامل حفاز يزيد من سرعة تفكك فوق أكسيد الهيدروجين دون أن يتغير أو يستهلك." },
+            { name: "فوق أكسيد الهيدروجين", symbol: "H₂O₂", type: "catalyst", typeLabel: "متفاعل يتفكك ⚡", color: "purple", desc: "سائل يتفكك في وجود عامل حفاز إلى ماء (H₂O) وغاز الأكسجين (O₂)." }
+        ];
+
+        function renderCompounds(filter = 'all') {
+            const grid = document.getElementById('compounds-grid');
+            grid.innerHTML = '';
+            const filtered = filter === 'all' ? compoundsDirectory : compoundsDirectory.filter(c => c.type === filter);
+            filtered.forEach(item => {
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-2xl bg-slate-900/85 border border-slate-700/80 hover:border-${item.color}-400 transition space-y-2`;
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-${item.color}-500/20 text-${item.color}-300">${item.typeLabel}</span>
+                        <span class="chem-formula text-lg text-white bg-slate-950 px-2.5 py-0.5 rounded-lg border border-slate-800">${item.symbol}</span>
+                    </div>
+                    <h4 class="text-base font-extrabold text-white">${item.name}</h4>
+                    <p class="text-xs text-slate-300 leading-relaxed">${item.desc}</p>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterCompounds(type) {
+            playSound('click');
+            document.querySelectorAll('.comp-filter-btn').forEach(btn => {
+                btn.classList.remove('bg-sky-600', 'text-white');
+                btn.classList.add('bg-slate-800', 'text-slate-200');
+            });
+            event.target.classList.remove('bg-slate-800', 'text-slate-200');
+            event.target.classList.add('bg-sky-600', 'text-white');
+            renderCompounds(type);
+        }
+
+        // ------------------------------------------
+        // 4. EQUATION BALANCER TRAINER (LESSON 2)
+        // ------------------------------------------
+        function checkEquation(eqNum) {
+            if (eqNum === 1) {
+                const a = document.getElementById('eq1-a').value;
+                const b = document.getElementById('eq1-b').value;
+                const c = document.getElementById('eq1-c').value;
+                const status = document.getElementById('eq1-status');
+                if (a === '2' && b === '1' && c === '2') {
+                    playSound('success');
+                    status.innerHTML = '<span class="text-emerald-400">ممتازة يا حلا! 2H₂ + O₂ ──▶ 2H₂O موزونة 100% ✅</span>';
+                    showToast('أحسنتِ يا حلا! المعادلة موزونة وتحقق قانون بقاء الكتلة 🎉', '⚖️');
+                } else {
+                    playSound('error');
+                    status.innerHTML = '<span class="text-rose-400">حاولي مرة أخرى! احسبي عدد ذرات الهيدروجين والأكسجين في الطرفين ❌</span>';
+                }
+            } else if (eqNum === 2) {
+                const a = document.getElementById('eq2-a').value;
+                const b = document.getElementById('eq2-b').value;
+                const c = document.getElementById('eq2-c').value;
+                const status = document.getElementById('eq2-status');
+                if (a === '2' && b === '1' && c === '2') {
+                    playSound('success');
+                    status.innerHTML = '<span class="text-emerald-400">رائعة يا حلا! 2Na + Cl₂ ──▶ 2NaCl موزونة بدقة ✅</span>';
+                    showToast('عبقرية الكيمياء حلا تامر! إجابة صحيحة 🌟', '🏆');
+                } else {
+                    playSound('error');
+                    status.innerHTML = '<span class="text-rose-400">غير موزونة بعد! لاحظي أن جزيء الكلور Cl₂ به ذرتان ❌</span>';
+                }
+            }
+        }
+
+        // ------------------------------------------
+        // 5. INTERACTIVE 3D VIRTUAL LAB LOGIC
+        // ------------------------------------------
+        const reactantsList1 = [
+            { id: 'Mg', name: 'ماغنسيوم (فلز)', symbol: 'Mg', color: '#cbd5e1', icon: '🔩' },
+            { id: 'Na', name: 'صوديوم (فلز)', symbol: 'Na', color: '#e2e8f0', icon: '⚡' },
+            { id: 'Zn', name: 'خارصين (فلز)', symbol: 'Zn', color: '#94a3b8', icon: '⚙️' },
+            { id: 'C', name: 'كربون (لافلز)', symbol: 'C', color: '#1e293b', icon: '🖤' },
+            { id: 'HCl', name: 'حمض هيدروكلوريك', symbol: 'HCl', color: '#fca5a5', icon: '🍋' },
+            { id: 'H2O2', name: 'فوق أكسيد الهيدروجين', symbol: 'H₂O₂', color: '#bae6fd', icon: '💧' },
+            { id: 'MgO', name: 'أكسيد ماغنسيوم', symbol: 'MgO', color: '#f8fafc', icon: '⚪' },
+            { id: 'Starch', name: 'محلول النشا (غذاء)', symbol: 'نشا', color: '#fef3c7', icon: '🍞' },
+            { id: 'Glucose', name: 'سكر الجلوكوز (غذاء)', symbol: 'C₆H₁₂O₆', color: '#e0f2fe', icon: '🍯' },
+            { id: 'Protein', name: 'زلال البيض (بروتين)', symbol: 'بروتين', color: '#fef9c3', icon: '🥚' }
+        ];
+
+        const reactantsList2 = [
+            { id: 'O2', name: 'غاز الأكسجين (لافلز)', symbol: 'O₂', color: '#38bdf8', icon: '💨' },
+            { id: 'HCl', name: 'حمض هيدروكلوريك', symbol: 'HCl', color: '#f43f5e', icon: '🍋' },
+            { id: 'NaOH', name: 'هيدروكسيد صوديوم (قلوي)', symbol: 'NaOH', color: '#3b82f6', icon: '🧼' },
+            { id: 'H2O', name: 'ماء + صبغة عباد الشمس', symbol: 'H₂O', color: '#a855f7', icon: '💜' },
+            { id: 'MnO2', name: 'ثاني أكسيد المنجنيز (حفاز)', symbol: 'MnO₂', color: '#334155', icon: '🔋' },
+            { id: 'Cl2', name: 'غاز الكلور (لافلز)', symbol: 'Cl₂', color: '#a3e635', icon: '🧪' },
+            { id: 'Iodine', name: 'محلول اليود (كاشف)', symbol: 'I₂', color: '#d97706', icon: '🟠' },
+            { id: 'Benedict', name: 'كاشف بندكت الأزرق', symbol: 'بندكت', color: '#0284c7', icon: '🔵' },
+            { id: 'Biuret', name: 'كاشف البيوريت', symbol: 'بيوريت', color: '#38bdf8', icon: '🧬' }
+        ];
+
+        let selectedR1 = null;
+        let selectedR2 = null;
+
+        function initLabButtons() {
+            const r1Container = document.getElementById('reactant1-buttons');
+            const r2Container = document.getElementById('reactant2-buttons');
+
+            reactantsList1.forEach(item => {
+                const btn = document.createElement('button');
+                btn.id = 'r1-btn-' + item.id;
+                btn.className = 'r1-btn p-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-right flex items-center justify-between transition text-xs';
+                btn.innerHTML = `
+                    <span class="font-bold text-white truncate">${item.icon} ${item.name}</span>
+                    <span class="chem-formula text-sky-300 bg-slate-950 px-1.5 py-0.5 rounded text-[11px]">${item.symbol}</span>
+                `;
+                btn.onclick = () => selectReactant(1, item);
+                r1Container.appendChild(btn);
+            });
+
+            reactantsList2.forEach(item => {
+                const btn = document.createElement('button');
+                btn.id = 'r2-btn-' + item.id;
+                btn.className = 'r2-btn p-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-right flex items-center justify-between transition text-xs';
+                btn.innerHTML = `
+                    <span class="font-bold text-white truncate">${item.icon} ${item.name}</span>
+                    <span class="chem-formula text-purple-300 bg-slate-950 px-1.5 py-0.5 rounded text-[11px]">${item.symbol}</span>
+                `;
+                btn.onclick = () => selectReactant(2, item);
+                r2Container.appendChild(btn);
+            });
+        }
+
+        function selectReactant(slot, item) {
+            playSound('click');
+            if (slot === 1) {
+                selectedR1 = item;
+                document.querySelectorAll('.r1-btn').forEach(b => b.classList.remove('border-sky-400', 'bg-sky-950'));
+                document.getElementById('r1-btn-' + item.id).classList.add('border-sky-400', 'bg-sky-950');
+                document.getElementById('badge-r1').textContent = `المادة 1: ${item.name} (${item.symbol})`;
+                update3DLiquidColor(item.color);
+            } else {
+                selectedR2 = item;
+                document.querySelectorAll('.r2-btn').forEach(b => b.classList.remove('border-purple-400', 'bg-purple-950'));
+                document.getElementById('r2-btn-' + item.id).classList.add('border-purple-400', 'bg-purple-950');
+                document.getElementById('badge-r2').textContent = `المادة 2: ${item.name} (${item.symbol})`;
+            }
+        }
+
+        function loadPreset(r1Id, r2Id, heat) {
+            const item1 = reactantsList1.find(x => x.id === r1Id);
+            const item2 = reactantsList2.find(x => x.id === r2Id);
+            if (item1) selectReactant(1, item1);
+            if (item2) selectReactant(2, item2);
+            document.getElementById('lab-heat-toggle').checked = heat;
+            executeReaction();
+        }
+
+        // Comprehensive Reaction Database
+        const reactionRecipes = {
+            'Mg+O2': {
+                needHeat: true,
+                type: 'اتحاد مباشر (فلز + لافلز)',
+                eq: '2Mg(s) + O₂(g) ──Δ──▶ 2MgO(s)',
+                liquidColor: '#f8fafc',
+                effect: 'sparks',
+                desc: '🔥 اشتعال شريط الماغنسيوم بضوء أبيض ساطع جداً! يتكون مسحوق أبيض من أكسيد الماغنسيوم (أكسيد قاعدي).'
+            },
+            'C+O2': {
+                needHeat: true,
+                type: 'اتحاد مباشر (لافلز + أكسجين)',
+                eq: 'C(s) + O₂(g) ──Δ──▶ CO₂(g) ↑',
+                liquidColor: '#94a3b8',
+                effect: 'bubbles',
+                desc: '💨 احتراق الكربون (الفحم) في وجود الأكسجين وتصاعد غاز ثاني أكسيد الكربون (أكسيد حامضي يعكر ماء الجير الرائق).'
+            },
+            'Mg+HCl': {
+                needHeat: false,
+                type: 'إحلال بسيط (فلز نشط + حمض)',
+                eq: 'Mg(s) + 2HCl(aq) ──▶ MgCl₂(aq) + H₂(g) ↑',
+                liquidColor: '#e2e8f0',
+                effect: 'bubbles',
+                desc: '🫧 فوران وتصاعد فقاعات غاز الهيدروجين (H₂) الذي يشتعل بفرقعة عند تقريب عود ثقاب مشتعل، ويتكون ملح كلوريد الماغنسيوم.'
+            },
+            'Zn+HCl': {
+                needHeat: false,
+                type: 'إحلال بسيط (فلز + حمض)',
+                eq: 'Zn(s) + 2HCl(aq) ──▶ ZnCl₂(aq) + H₂(g) ↑',
+                liquidColor: '#cbd5e1',
+                effect: 'bubbles',
+                desc: '🫧 يحل الخارصين محل هيدروجين الحمض ويتصاعد غاز الهيدروجين ويتكون محلول ملح كلوريد الخارصين.'
+            },
+            'HCl+NaOH': {
+                needHeat: false,
+                type: 'تفاعل التعادل (حمض + قلوي)',
+                eq: 'HCl(aq) + NaOH(aq) ──▶ NaCl(aq) + H₂O(l)',
+                liquidColor: '#34d399',
+                effect: 'glow',
+                desc: '🧂 تفاعل تعادل مثالي! يتحد الحمض مع القلوي فينتج ملح الطعام (كلوريد الصوديوم) والماء المتعادل التأثير على صبغة عباد الشمس.'
+            },
+            'H2O2+MnO2': {
+                needHeat: false,
+                type: 'تفكك سريع بوجود عامل حفاز ⚡',
+                eq: '2H₂O₂(l) ──MnO₂──▶ 2H₂O(l) + O₂(g) ↑',
+                liquidColor: '#38bdf8',
+                effect: 'bubbles',
+                desc: '⚡ يعمل ثاني أكسيد المنجنيز (MnO₂) كعامل نشط (حفاز) فيسرّع تفكك فوق أكسيد الهيدروجين وتتصاعد فقاعات غاز الأكسجين بكثافة دون أن يتغير العامل الحفاز!'
+            },
+            'Na+Cl2': {
+                needHeat: true,
+                type: 'اتحاد مباشر (فلز + لافلز)',
+                eq: '2Na(s) + Cl₂(g) ──Δ──▶ 2NaCl(s)',
+                liquidColor: '#fef08a',
+                effect: 'sparks',
+                desc: '✨ يتفاعل الصوديوم الفلزي النشط مع غاز الكلور اللافلزي مكوناً بلورات بيضاء من ملح كلوريد الصوديوم (ملح الطعام).'
+            },
+            'MgO+H2O': {
+                needHeat: false,
+                type: 'ذوبان أكسيد قاعدي في الماء',
+                eq: 'MgO(s) + H₂O(l) ──▶ Mg(OH)₂(aq)',
+                liquidColor: '#3b82f6',
+                effect: 'glow',
+                desc: '🔵 يذوب أكسيد الماغنسيوم في الماء مكوناً محلول هيدروكسيد الماغنسيوم القلوي الذي يزرّق صبغة عباد الشمس البنفسجية!'
+            },
+            'Starch+Iodine': {
+                needHeat: false,
+                type: 'كيمياء التغذية: الكشف عن النشا 🍞',
+                eq: 'محلول النشا + محلول اليود البني ──▶ لون أزرق داكن',
+                liquidColor: '#1e1b4b',
+                effect: 'glow',
+                desc: '🔵 نتيجة إيجابية! يتحول لون محلول اليود البني/البرتقالي إلى اللون الأزرق الداكن دلالة على وجود الكربوهيدرات المعقدة (النشا).'
+            },
+            'Glucose+Benedict': {
+                needHeat: true,
+                type: 'كيمياء التغذية: الكشف عن الجلوكوز 🍯',
+                eq: 'سكر الجلوكوز + كاشف بندكت الأزرق ──Δ──▶ لون برتقالي',
+                liquidColor: '#f97316',
+                effect: 'glow',
+                desc: '🟠 نتيجة إيجابية! بالتسخين يتحول لون كاشف بندكت من الأزرق إلى البرتقالي/الأحمر الطوبي دلالة على وجود السكر الأحادي (الجلوكوز).'
+            },
+            'Protein+Biuret': {
+                needHeat: false,
+                type: 'كيمياء التغذية: الكشف عن البروتين 🥚',
+                eq: 'زلال البيض (بروتين) + كاشف البيوريت ──▶ لون بنفسجي',
+                liquidColor: '#9333ea',
+                effect: 'glow',
+                desc: '🟣 نتيجة إيجابية! يتحول لون كاشف البيوريت من الأزرق الفاتح إلى اللون البنفسجي دلالة على وجود البروتينات.'
+            }
+        };
+
+        function executeReaction() {
+            if (!selectedR1 || !selectedR2) {
+                playSound('error');
+                showToast('من فضلك يا حلا اختاري المادة الأولى والمادة الثانية أولاً! 🧪', '⚠️');
+                return;
+            }
+
+            const hasHeat = document.getElementById('lab-heat-toggle').checked;
+            const key1 = `${selectedR1.id}+${selectedR2.id}`;
+            const key2 = `${selectedR2.id}+${selectedR1.id}`;
+            const recipe = reactionRecipes[key1] || reactionRecipes[key2];
+
+            const eqDisplay = document.getElementById('reaction-equation-display');
+            const expDisplay = document.getElementById('reaction-explanation');
+            const typeTag = document.getElementById('reaction-type-tag');
+
+            if (recipe) {
+                if (recipe.needHeat && !hasHeat) {
+                    playSound('error');
+                    typeTag.textContent = 'يحتاج إلى تسخين 🔥';
+                    typeTag.className = 'text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold';
+                    eqDisplay.textContent = `${selectedR1.symbol} + ${selectedR2.symbol} ──(لا يحدث تفاعل بدون حرارة)──▶ ؟`;
+                    expDisplay.innerHTML = `🔥 <strong>ملاحظة هامة يا حلا:</strong> هذا التفاعل يحتاج إلى طاقة حرارية لكسر الروابط! فعّلي خيار <strong>"تسخين اللهب (Δ)"</strong> ثم اضغطي ابدئي التفاعل مرة أخرى.`;
+                    showToast('فعّلي تسخين اللهب (Δ) لإتمام هذا التفاعل! 🔥', '🔥');
+                    return;
+                }
+
+                playSound('reaction');
+                typeTag.textContent = recipe.type;
+                typeTag.className = 'text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold';
+                eqDisplay.textContent = recipe.eq;
+                expDisplay.innerHTML = recipe.desc;
+
+                update3DLiquidColor(recipe.liquidColor);
+                trigger3DEffect(recipe.effect, hasHeat);
+                showToast('تم التفاعل بنجاح! شاهدي الكأس 3D ✨', '🧪');
+            } else {
+                playSound('click');
+                typeTag.textContent = 'خليط فيزيائي / لا يحدث تفاعل مباشر';
+                typeTag.className = 'text-xs px-2.5 py-0.5 rounded-full bg-slate-700 text-slate-300 font-bold';
+                eqDisplay.textContent = `${selectedR1.symbol} + ${selectedR2.symbol} ──▶ لا يحدث تفاعل كيميائي نشط`;
+                expDisplay.innerHTML = `ℹ️ لم يحدث تفاعل كيميائي واضح بين <strong>${selectedR1.name}</strong> و <strong>${selectedR2.name}</strong> في الظروف الحالية. جربي اختيار فلز نشط مع حمض، أو حمض مع قلوي، أو إحدى التجارب السريعة المقترحة!`;
+                trigger3DEffect('none', hasHeat);
+            }
+        }
+
+        function resetLab() {
+            playSound('click');
+            selectedR1 = null;
+            selectedR2 = null;
+            document.getElementById('lab-heat-toggle').checked = false;
+            document.querySelectorAll('.r1-btn, .r2-btn').forEach(b => {
+                b.classList.remove('border-sky-400', 'bg-sky-950', 'border-purple-400', 'bg-purple-950');
+            });
+            document.getElementById('badge-r1').textContent = 'المادة 1: لم تُحدد';
+            document.getElementById('badge-r2').textContent = 'المادة 2: لم تُحدد';
+            document.getElementById('reaction-type-tag').textContent = 'جاهز للتجربة';
+            document.getElementById('reaction-equation-display').textContent = 'اختاري مادتين لبدء التفاعل...';
+            document.getElementById('reaction-explanation').textContent = 'تم تنظيف الكأس الزجاجي بالكامل وجاهز لتجربة جديدة يا حلا!';
+            update3DLiquidColor('#1e293b');
+            trigger3DEffect('none', false);
+        }
+
+        // ------------------------------------------
+        // 6. INTERACTIVE QUIZ LOGIC
+        // ------------------------------------------
+        const quizData = [
+            {
+                q: "1. كسر الروابط الموجودة في جزيئات المواد المتفاعلة وتكوين روابط جديدة في جزيئات المواد الناتجة يُعرف بـ:",
+                options: ["التغير الفيزيائي", "التفاعل الكيميائي", "الذوبان", "الانصهار"],
+                correct: 1
+            },
+            {
+                q: "2. عند احتراق شريط الماغنسيوم في الهواء يتكون مسحوق أبيض من:",
+                options: ["كلوريد الماغنسيوم", "كربونات الماغنسيوم", "أكسيد الماغنسيوم", "هيدروكسيد الماغنسيوم"],
+                correct: 2
+            },
+            {
+                q: "3. المادة التي تزيد من سرعة التفاعل الكيميائي دون أن تتغير أو تستهلك تُسمى:",
+                options: ["العامل الحفاز (النشط)", "الأكسيد الحامضي", "الراسب", "الملح المتعادل"],
+                correct: 0
+            },
+            {
+                q: "4. تفاعل حمض مع قلوي لتكوين ملح وماء يُسمى تفاعل:",
+                options: ["الاحتراق", "التعادل", "التفكك", "الأكسدة"],
+                correct: 1
+            },
+            {
+                q: "5. يجب أن تكون المعادلة الكيميائية موزونة لتحقيق قانون:",
+                options: ["الجاذبية", "بقاء الكتلة", "الطفو", "الانعكاس"],
+                correct: 1
+            },
+            {
+                q: "6. ما الرمز الذي يُكتب أسفل يمين الصيغة الكيميائية للدلالة على المحلول المائي؟",
+                options: ["(s)", "(g)", "(l)", "(aq)"],
+                correct: 3
+            },
+            {
+                q: "7. للكشف عن وجود النشا في الأطعمة نستخدم محلول اليود فيتحول لونه إلى:",
+                options: ["الأزرق الداكن", "البرتقالي", "البنفسجي", "الأخضر"],
+                correct: 0
+            },
+            {
+                q: "8. العنصر الغذائي المسؤول بشكل أساسي عن نمو الجسم وبناء العضلات وتعويض الخلايا التالفة هو:",
+                options: ["الكربوهيدرات", "البروتينات", "الأملاح", "الماء"],
+                correct: 1
+            }
+        ];
+
+        let score = 0;
+        let answeredSet = new Set();
+
+        function renderQuiz() {
+            const container = document.getElementById('quiz-questions-container');
+            document.getElementById('quiz-total').textContent = quizData.length;
+            container.innerHTML = '';
+            quizData.forEach((item, qIdx) => {
+                const qCard = document.createElement('div');
+                qCard.className = 'p-5 rounded-2xl bg-slate-900/90 border border-slate-700/80 space-y-3';
+                let optionsHTML = '';
+                item.options.forEach((opt, oIdx) => {
+                    optionsHTML += `
+                        <button id="q${qIdx}-opt${oIdx}" onclick="answerQuiz(${qIdx}, ${oIdx})" class="btn-bubble p-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-right text-xs sm:text-sm font-bold text-slate-200 transition">
+                            ${opt}
+                        </button>
+                    `;
+                });
+                qCard.innerHTML = `
+                    <div class="font-extrabold text-white text-sm sm:text-base">${item.q}</div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">${optionsHTML}</div>
+                    <div id="q${qIdx}-feedback" class="text-xs font-bold"></div>
+                `;
+                container.appendChild(qCard);
+            });
+        }
+
+        function answerQuiz(qIdx, oIdx) {
+            if (answeredSet.has(qIdx)) return;
+            answeredSet.add(qIdx);
+
+            const correctIdx = quizData[qIdx].correct;
+            const feedback = document.getElementById(`q${qIdx}-feedback`);
+            const chosenBtn = document.getElementById(`q${qIdx}-opt${oIdx}`);
+            const correctBtn = document.getElementById(`q${qIdx}-opt${correctIdx}`);
+
+            if (oIdx === correctIdx) {
+                playSound('success');
+                score++;
+                document.getElementById('quiz-score').textContent = score;
+                chosenBtn.classList.remove('bg-slate-800', 'border-slate-600');
+                chosenBtn.classList.add('bg-emerald-600', 'border-emerald-300', 'text-white');
+                feedback.innerHTML = '<span class="text-emerald-400">إجابة صحيحة وممتازة يا حلا! 🌟✅</span>';
+            } else {
+                playSound('error');
+                chosenBtn.classList.remove('bg-slate-800', 'border-slate-600');
+                chosenBtn.classList.add('bg-rose-600', 'border-rose-300', 'text-white');
+                correctBtn.classList.remove('bg-slate-800', 'border-slate-600');
+                correctBtn.classList.add('bg-emerald-600/80', 'border-emerald-300', 'text-white');
+                feedback.innerHTML = `<span class="text-rose-400">إجابة غير صحيحة! الإجابة الصحيحة هي: ${quizData[qIdx].options[correctIdx]} 💡</span>`;
+            }
+
+            if (answeredSet.size === quizData.length) {
+                showToast(`رائعة يا حلا تامر! أنهيتِ الاختبار بنتيجة ${score} من ${quizData.length} 🎉`, '🏆');
+            }
+        }
+
+        function resetQuiz() {
+            playSound('click');
+            score = 0;
+            answeredSet.clear();
+            document.getElementById('quiz-score').textContent = '0';
+            renderQuiz();
+        }
+
+        // ------------------------------------------
+        // 7. THREE.JS BACKGROUND SCENE (FLOATING ATOMS & SHAPES)
+        // ------------------------------------------
+        let bgScene, bgCamera, bgRenderer, bgMolecules = [];
+
+        function initBackground3D() {
+            const canvas = document.getElementById('bg-canvas');
+            bgScene = new THREE.Scene();
+            bgCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            bgCamera.position.z = 35;
+
+            bgRenderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+            bgRenderer.setSize(window.innerWidth, window.innerHeight);
+            bgRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            bgScene.add(ambientLight);
+
+            const pointLight1 = new THREE.PointLight(0x38bdf8, 1.5, 100);
+            pointLight1.position.set(20, 20, 20);
+            bgScene.add(pointLight1);
+
+            const pointLight2 = new THREE.PointLight(0xc084fc, 1.5, 100);
+            pointLight2.position.set(-20, -20, 20);
+            bgScene.add(pointLight2);
+
+            // Create Floating 3D Molecules & Geometric Atoms
+            const colors = [0x38bdf8, 0xc084fc, 0xf472b6, 0x34d399, 0xfbbf24];
+            for (let i = 0; i < 18; i++) {
+                const group = new THREE.Group();
+
+                // Central Atom Sphere
+                const coreGeo = new THREE.SphereGeometry(Math.random() * 0.7 + 0.5, 20, 20);
+                const coreMat = new THREE.MeshStandardMaterial({
+                    color: colors[i % colors.length],
+                    roughness: 0.25,
+                    metalness: 0.4,
+                    transparent: true,
+                    opacity: 0.55
+                });
+                const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+                group.add(coreMesh);
+
+                // Orbital Ring
+                if (i % 2 === 0) {
+                    const ringGeo = new THREE.TorusGeometry(1.6, 0.04, 12, 48);
+                    const ringMat = new THREE.MeshBasicMaterial({
+                        color: colors[(i + 1) % colors.length],
+                        transparent: true,
+                        opacity: 0.35
+                    });
+                    const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+                    ringMesh.rotation.x = Math.random() * Math.PI;
+                    ringMesh.rotation.y = Math.random() * Math.PI;
+                    group.add(ringMesh);
+                } else {
+                    // Bonded satellite atom
+                    const satGeo = new THREE.SphereGeometry(0.35, 16, 16);
+                    const satMesh = new THREE.Mesh(satGeo, coreMat);
+                    satMesh.position.set(1.3, 0.6, 0);
+                    group.add(satMesh);
+                }
+
+                group.position.set(
+                    (Math.random() - 0.5) * 65,
+                    (Math.random() - 0.5) * 45,
+                    (Math.random() - 0.5) * 25 - 5
+                );
+
+                group.userData = {
+                    rotSpeedX: (Math.random() - 0.5) * 0.015,
+                    rotSpeedY: (Math.random() - 0.5) * 0.015,
+                    floatOffset: Math.random() * Math.PI * 2,
+                    floatSpeed: 0.008 + Math.random() * 0.01
+                };
+
+                bgScene.add(group);
+                bgMolecules.push(group);
+            }
+        }
+
+        // ------------------------------------------
+        // 8. THREE.JS INTERACTIVE 3D LAB BEAKER SCENE
+        // ------------------------------------------
+        let labScene, labCamera, labRenderer, labBeakerGroup, liquidMesh, burnerFlameMesh;
+        let labParticles = [];
+        let activeEffect = 'none';
+        let isDraggingLab = false;
+        let prevMouseX = 0, prevMouseY = 0;
+
+        function initLab3D() {
+            const container = document.getElementById('lab-canvas-container');
+            labScene = new THREE.Scene();
+
+            labCamera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+            labCamera.position.set(0, 3.2, 8.5);
+            labCamera.lookAt(0, 0.8, 0);
+
+            labRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            labRenderer.setSize(container.clientWidth, container.clientHeight);
+            labRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(labRenderer.domElement);
+
+            // Studio Lighting
+            const amb = new THREE.AmbientLight(0xffffff, 0.75);
+            labScene.add(amb);
+
+            const dirLight = new THREE.DirectionalLight(0x38bdf8, 1.4);
+            dirLight.position.set(5, 10, 7);
+            labScene.add(dirLight);
+
+            const pinkLight = new THREE.PointLight(0xf472b6, 1.2, 20);
+            pinkLight.position.set(-5, 4, 4);
+            labScene.add(pinkLight);
+
+            // Lab Table Stand
+            const standGeo = new THREE.CylinderGeometry(2.6, 2.8, 0.3, 32);
+            const standMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.7, roughness: 0.3 });
+            const standMesh = new THREE.Mesh(standGeo, standMat);
+            standMesh.position.y = -1.2;
+            labScene.add(standMesh);
+
+            // Bunsen Burner Flame (Hidden until heat toggled)
+            const flameGeo = new THREE.ConeGeometry(0.55, 1.1, 20);
+            const flameMat = new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.85 });
+            burnerFlameMesh = new THREE.Mesh(flameGeo, flameMat);
+            burnerFlameMesh.position.y = -0.65;
+            burnerFlameMesh.visible = false;
+            labScene.add(burnerFlameMesh);
+
+            // Beaker Group
+            labBeakerGroup = new THREE.Group();
+            labBeakerGroup.position.y = 0.8;
+
+            // Glass Cylinder
+            const glassGeo = new THREE.CylinderGeometry(1.5, 1.45, 3.2, 36, 1, true);
+            const glassMat = new THREE.MeshPhysicalMaterial({
+                color: 0xe0f2fe,
+                transparent: true,
+                opacity: 0.28,
+                roughness: 0.1,
+                metalness: 0.1,
+                side: THREE.DoubleSide
+            });
+            const glassMesh = new THREE.Mesh(glassGeo, glassMat);
+            labBeakerGroup.add(glassMesh);
+
+            // Glass Rim Ring
+            const rimGeo = new THREE.TorusGeometry(1.5, 0.06, 16, 48);
+            const rimMat = new THREE.MeshStandardMaterial({ color: 0xbae6fd, roughness: 0.2 });
+            const rimMesh = new THREE.Mesh(rimGeo, rimMat);
+            rimMesh.rotation.x = Math.PI / 2;
+            rimMesh.position.y = 1.6;
+            labBeakerGroup.add(rimMesh);
+
+            // Chemical Liquid Inside Beaker
+            const liqGeo = new THREE.CylinderGeometry(1.42, 1.38, 1.8, 32);
+            const liqMat = new THREE.MeshStandardMaterial({
+                color: 0x1e293b,
+                transparent: true,
+                opacity: 0.85,
+                roughness: 0.2
+            });
+            liquidMesh = new THREE.Mesh(liqGeo, liqMat);
+            liquidMesh.position.y = -0.65;
+            labBeakerGroup.add(liquidMesh);
+
+            labScene.add(labBeakerGroup);
+
+            // Create Particle Pool (Bubbles / Sparks)
+            const partGeo = new THREE.SphereGeometry(0.09, 12, 12);
+            for (let i = 0; i < 45; i++) {
+                const partMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85 });
+                const p = new THREE.Mesh(partGeo, partMat);
+                p.visible = false;
+                labBeakerGroup.add(p);
+                labParticles.push(p);
+            }
+
+            // Mouse & Touch Rotation Controls
+            container.addEventListener('mousedown', (e) => {
+                isDraggingLab = true;
+                prevMouseX = e.clientX;
+                prevMouseY = e.clientY;
+            });
+            window.addEventListener('mouseup', () => { isDraggingLab = false; });
+            window.addEventListener('mousemove', (e) => {
+                if (!isDraggingLab) return;
+                const dx = e.clientX - prevMouseX;
+                const dy = e.clientY - prevMouseY;
+                labBeakerGroup.rotation.y += dx * 0.01;
+                labBeakerGroup.rotation.x = Math.max(-0.4, Math.min(0.4, labBeakerGroup.rotation.x + dy * 0.005));
+                prevMouseX = e.clientX;
+                prevMouseY = e.clientY;
+            });
+
+            // Touch events for mobile
+            container.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    isDraggingLab = true;
+                    prevMouseX = e.touches[0].clientX;
+                    prevMouseY = e.touches[0].clientY;
+                }
+            }, { passive: true });
+            container.addEventListener('touchend', () => { isDraggingLab = false; });
+            container.addEventListener('touchmove', (e) => {
+                if (!isDraggingLab || e.touches.length !== 1) return;
+                const dx = e.touches[0].clientX - prevMouseX;
+                labBeakerGroup.rotation.y += dx * 0.015;
+                prevMouseX = e.touches[0].clientX;
+            }, { passive: true });
+        }
+
+        function update3DLiquidColor(hexColor) {
+            if (liquidMesh) {
+                liquidMesh.material.color.set(hexColor);
+            }
+        }
+
+        function trigger3DEffect(effectType, showFlame) {
+            activeEffect = effectType;
+            if (burnerFlameMesh) {
+                burnerFlameMesh.visible = showFlame;
+            }
+            labParticles.forEach(p => {
+                if (effectType === 'none') {
+                    p.visible = false;
+                } else {
+                    p.visible = true;
+                    p.position.set(
+                        (Math.random() - 0.5) * 2.1,
+                        -1.3 + Math.random() * 1.4,
+                        (Math.random() - 0.5) * 2.1
+                    );
+                    if (effectType === 'sparks') {
+                        p.material.color.setHex(Math.random() > 0.5 ? 0xfbbf24 : 0xffffff);
+                    } else if (effectType === 'bubbles') {
+                        p.material.color.setHex(0xbae6fd);
+                    } else {
+                        p.material.color.setHex(0xf472b6);
+                    }
+                }
+            });
+        }
+
+        function resizeLabCanvas() {
+            const container = document.getElementById('lab-canvas-container');
+            if (!container || !labRenderer || !labCamera) return;
+            if (container.clientWidth === 0) return;
+            labCamera.aspect = container.clientWidth / container.clientHeight;
+            labCamera.updateProjectionMatrix();
+            labRenderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        // Main Animation Loop
+        function animateAll() {
+            requestAnimationFrame(animateAll);
+
+            const time = Date.now() * 0.002;
+
+            // Animate Background 3D Molecules
+            bgMolecules.forEach(mol => {
+                mol.rotation.x += mol.userData.rotSpeedX;
+                mol.rotation.y += mol.userData.rotSpeedY;
+                mol.position.y += Math.sin(time + mol.userData.floatOffset) * mol.userData.floatSpeed;
+            });
+            if (bgRenderer && bgScene && bgCamera) {
+                bgRenderer.render(bgScene, bgCamera);
+            }
+
+            // Animate 3D Lab Beaker & Particles
+            if (labBeakerGroup && labRenderer && labScene && labCamera) {
+                if (!isDraggingLab) {
+                    labBeakerGroup.rotation.y += 0.004;
+                }
+                if (burnerFlameMesh && burnerFlameMesh.visible) {
+                    burnerFlameMesh.scale.y = 0.9 + Math.sin(time * 8) * 0.15;
+                }
+                if (activeEffect !== 'none') {
+                    labParticles.forEach(p => {
+                        if (!p.visible) return;
+                        if (activeEffect === 'bubbles') {
+                            p.position.y += 0.035;
+                            if (p.position.y > 0.25) p.position.y = -1.4;
+                        } else if (activeEffect === 'sparks') {
+                            p.position.y += (Math.random() - 0.3) * 0.08;
+                            p.position.x += (Math.random() - 0.5) * 0.08;
+                            if (p.position.y > 1.4 || p.position.y < -1.2) {
+                                p.position.set((Math.random() - 0.5) * 1.5, -0.5, (Math.random() - 0.5) * 1.5);
+                            }
+                        } else if (activeEffect === 'glow') {
+                            p.position.y += 0.015;
+                            if (p.position.y > 0.3) p.position.y = -1.3;
+                        }
+                    });
+                }
+                labRenderer.render(labScene, labCamera);
+            }
+        }
+
+        // Handle Window Resize
+        window.addEventListener('resize', () => {
+            if (bgCamera && bgRenderer) {
+                bgCamera.aspect = window.innerWidth / window.innerHeight;
+                bgCamera.updateProjectionMatrix();
+                bgRenderer.setSize(window.innerWidth, window.innerHeight);
+            }
+            resizeLabCanvas();
+        });
+
+        // Initialize Everything on Window Load
+        window.onload = function () {
+            renderCompounds('all');
+            initLabButtons();
+            renderQuiz();
+            initBackground3D();
+            initLab3D();
+            animateAll();
+        };
+    </script>
+</body>
+</html>
